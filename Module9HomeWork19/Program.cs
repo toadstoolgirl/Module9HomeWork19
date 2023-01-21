@@ -13,7 +13,8 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-
+using Module9HomeWork19;
+//using FileType = Module9HomeWork19.FileType;
 
 string token = File.ReadAllText(@"token.txt");
 using var cts = new CancellationTokenSource(); /*токен отмены*/
@@ -111,13 +112,13 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
             var fileMessage = fileMessages.FirstOrDefault(fm => fm.FileName == fileNames);
             switch (fileMessage.FileType)
             {
-                case FileType.Document:
+                case Module9HomeWork19.FileType.Document:
                     await botClient.SendDocumentAsync(chatId, fileMessage.FileId);
                     break;
-                case FileType.Audio:
+                case Module9HomeWork19.FileType.Audio:
                     await botClient.SendDocumentAsync(chatId, fileMessage.FileId);
                     break;
-                case FileType.Photo:
+                case Module9HomeWork19.FileType.Photo:
                     await botClient.SendPhotoAsync(chatId, fileMessage.FileId);
                     break;
             }
@@ -232,5 +233,5 @@ async void DownLoad(string fileId, string path, long chatId)
     fs.Close();
     fs.Dispose();
 
-    async Task SafeFileFromMessage(long chatId, string fileId, string fileName, FileType fileType) { };
+    async Task SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType) { };
 }
