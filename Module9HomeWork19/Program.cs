@@ -14,7 +14,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Module9HomeWork19;
-//using FileType = Module9HomeWork19.FileType;
+using FileType = Module9HomeWork19.FileType;
 
 string token = File.ReadAllText(@"token.txt");
 using var cts = new CancellationTokenSource(); /*токен отмены*/
@@ -124,11 +124,9 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
             }
             return;
         }
+
     }
-    else
-    {
-        await botClient.SendDocumentAsync(chatId, "There is no file with such name in storage");
-    }
+
     
 
     if (message.Text == "/keyboard")
@@ -145,7 +143,6 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
         await botClient.SendTextMessageAsync(message.Chat.Id, "Choose:", replyMarkup: keyboard);
         return;
     }
-    await botClient.SendTextMessageAsync(message.Chat.Id, $"You said:\n{message.Text}");
 
     if (message.Text == "/inline")
     {
@@ -176,6 +173,12 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
         await botClient.SendTextMessageAsync(message.Chat.Id, "Choose inline:", replyMarkup: keyboard);
         return;
     }
+    else
+    {
+        await botClient.SendDocumentAsync(chatId, "There is no file with such name in storage");
+    }
+
+    await botClient.SendTextMessageAsync(message.Chat.Id, $"You said:\n{message.Text}");
 
 }
 
