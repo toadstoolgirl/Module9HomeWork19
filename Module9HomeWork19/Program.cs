@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Module9HomeWork19;
 using FileType = Module9HomeWork19.FileType;
+using FileMessage = Module9HomeWork19.FileMessage;
 
 string token = File.ReadAllText(@"token.txt");
 using var cts = new CancellationTokenSource(); /*токен отмены*/
@@ -41,21 +42,24 @@ cts.Cancel();
 
 async Task HandleUpdatesAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
 {
-    var chatId = update.Message.Chat.Id;
-    if (update.Type == UpdateType.Message && update?.Message?.Text != null)
-    {
-        HandleMessage(botClient, update.Message, chatId);
-        return;
-    }
-
     if (update.Type == UpdateType.CallbackQuery)
     {
         HandleCallbackQuery(botClient, update.CallbackQuery);
         return;
     }
 
+    var chatId = update.Message.Chat.Id;
+
+    if (update.Type == UpdateType.Message && update?.Message?.Text != null)
+    {
+        HandleMessage(botClient, update.Message, chatId);
+        return;
+    }
+
     if (update.Type == UpdateType.Message && update?.Message?.Document != null) /*сохраняем файл*/
     {
+        
+        SafeFileFromMessage(chatId, update.Message.Document.FileId, update.Message.Document.FileName, Module9HomeWork19.FileType.Document);
         DownLoad(update.Message.Document.FileId, update.Message.Document.FileName, chatId);
         return;
     }
@@ -63,22 +67,25 @@ async Task HandleUpdatesAsync(ITelegramBotClient botClient, Update update, Cance
     if (update.Type == UpdateType.Message && update?.Message?.Photo != null) /*сохраняем фото с названием - временем сообщения*/
     {
         var messageDateTime = (Convert.ToDateTime(update.Message.Date)).ToLocalTime();
-
         var stringDateTime = Convert.ToString(messageDateTime);
         string[] cutSpase = stringDateTime.Split(' ');
         var datePlusTime = string.Concat(cutSpase[0], '_', cutSpase[1]);
         string[] cutColon = datePlusTime.Split(':');
         string messagePhotoName = string.Concat(cutColon[0], '.', cutColon[1], '.', cutColon[2]);
-
+        async Task SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType) { };
         DownLoad(update.Message.Photo.Last().FileId, messagePhotoName, chatId);
+        SafeFileFromMessage(chatId, update.Message.Photo.Last().FileId, messagePhotoName, Module9HomeWork19.FileType.Photo);
+
         return;
     }
 
     if (update.Type == UpdateType.Message && update?.Message?.Audio != null) /*сохраняем аудио*/
     {
+        SafeFileFromMessage(chatId, update.Message.Audio.FileId, update.Message.Audio.FileName, Module9HomeWork19.FileType.Audio);
         DownLoad(update.Message.Audio.FileId, update.Message.Audio.FileName, chatId);
         return;
     }
+
 }
 async Task HandleMessage(ITelegramBotClient botClient, Message message, long chatId)
 {
@@ -127,8 +134,6 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
 
     }
 
-    
-
     if (message.Text == "/keyboard")
     {
         ReplyKeyboardMarkup keyboard = new(new[]
@@ -143,6 +148,7 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
         await botClient.SendTextMessageAsync(message.Chat.Id, "Choose:", replyMarkup: keyboard);
         return;
     }
+    await botClient.SendTextMessageAsync(message.Chat.Id, $"You said:\n{message.Text}");
 
     if (message.Text == "/inline")
     {
@@ -177,9 +183,6 @@ async Task HandleMessage(ITelegramBotClient botClient, Message message, long cha
     {
         await botClient.SendDocumentAsync(chatId, "There is no file with such name in storage");
     }
-
-    await botClient.SendTextMessageAsync(message.Chat.Id, $"You said:\n{message.Text}");
-
 }
 
 async Task HandleCallbackQuery(ITelegramBotClient botClient, CallbackQuery callbackQuery)
@@ -199,7 +202,7 @@ Task HandleErrorAsync(ITelegramBotClient client, Exception exception, Cancellati
     return Task.CompletedTask;
 }
 
-async Task SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType)
+async void SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType)
 {
     if (_chatFileIds.TryGetValue(chatId, out var fileMessages))
     {
@@ -236,5 +239,5 @@ async void DownLoad(string fileId, string path, long chatId)
     fs.Close();
     fs.Dispose();
 
-    async Task SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType) { };
+    //async Task SafeFileFromMessage(long chatId, string fileId, string fileName, Module9HomeWork19.FileType fileType) { };
 }
